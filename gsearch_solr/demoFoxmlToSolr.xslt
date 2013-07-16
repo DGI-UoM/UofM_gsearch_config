@@ -21,6 +21,9 @@
   xmlns:mods="http://www.loc.gov/mods/v3"
   xmlns:exts="xalan://dk.defxws.fedoragsearch.server.GenericOperationsImpl"
   xmlns:islandora-exts="xalan://ca.upei.roblib.DataStreamForXSLT"
+  xmlns:sparql="http://www.w3.org/2001/sw/DataAccess/rf1/result"
+  xmlns:set="http://exslt.org/sets"
+  xmlns:xalan="http://xml.apache.org/xalan"
             exclude-result-prefixes="exts"
   xmlns:encoder="xalan://java.net.URLEncoder">
 
@@ -73,7 +76,8 @@
   <xsl:include href="/usr/local/fedora/tomcat/webapps/fedoragsearch/WEB-INF/classes/fgsconfigFinal/index/gsearch_solr/islandora_transforms/text_to_solr.xslt"/>
   <xsl:include href="/usr/local/fedora/tomcat/webapps/fedoragsearch/WEB-INF/classes/fgsconfigFinal/index/gsearch_solr/islandora_transforms/XML_to_one_solr_field.xslt"/>
   <xsl:include href="/usr/local/fedora/tomcat/webapps/fedoragsearch/WEB-INF/classes/fgsconfigFinal/index/gsearch_solr/islandora_transforms/XML_text_nodes_to_solr.xslt"/>
-  
+  <xsl:include href="/usr/local/fedora/tomcat/webapps/fedoragsearch/WEB-INF/classes/fgsconfigFinal/index/gsearch_solr/islandora_transforms/hierarchy.xslt"/>
+
   <!-- Decide which objects to modify the index of -->
   <xsl:template match="/">
     <update>
@@ -82,9 +86,7 @@
         <xsl:choose>
           <xsl:when test="foxml:digitalObject/foxml:objectProperties/foxml:property[@NAME='info:fedora/fedora-system:def/model#state' and @VALUE='Active']">
             <add>
-              <xsl:apply-templates select="/foxml:digitalObject" mode="indexFedoraObject">
-                <xsl:with-param name="PID" select="$PID"/>
-              </xsl:apply-templates>
+              <xsl:apply-templates select="/foxml:digitalObject" mode="indexFedoraObject" />
             </add>
           </xsl:when>
           <xsl:otherwise>
@@ -97,7 +99,7 @@
 
   <!-- Index an object -->
   <xsl:template match="/foxml:digitalObject" mode="indexFedoraObject">
-    <xsl:param name="PID"/>
+    <xsl:param name="PID" select="/foxml:digitalObject/@PID" />
 
     <doc>
       <!-- put the object pid into a field -->
@@ -147,6 +149,21 @@
           </xsl:when>
         </xsl:choose>
       </xsl:for-each>
+
+      <!--Get the ancestor list-->
+      <xsl:variable name="ancestors">
+        <xsl:call-template name="get-ancestors">
+          <xsl:with-param name="PID" select="/foxml:digitalObject/@PID" />
+        </xsl:call-template>
+      </xsl:variable>
+
+      <!--Iterate over the results of the traversal and construct the field tags for the solr update doc-->
+      <xsl:for-each select="xalan:nodeset($ancestors)//sparql:obj">
+        <xsl:if test="@uri != concat('info:fedora/', $PID)">
+          <field name="ancestors_ms"><xsl:value-of select="substring-after(@uri, '/')"/></field>
+        </xsl:if>
+      </xsl:for-each>
+
       <!-- this is an example of using template modes to have multiple ways of indexing the same stream -->
       <!--
       <xsl:apply-templates select="foxml:datastream[@ID='EAC-CPF']/foxml:datastreamVersion[last()]/foxml:xmlContent//eaccpf:eac-cpf">
@@ -160,6 +177,7 @@
       -->
 
     </doc>
+
   </xsl:template>
 
   <!-- Delete the solr doc of an object -->
