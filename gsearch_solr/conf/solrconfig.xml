@@ -353,6 +353,10 @@
        <str name="q.alt">*:*</str>
        <str name="qf">text_nodes_HOCR_hlt^0.75 catch_all_fields_mt^0.1</str>
      </lst>
+     <lst name="appends">
+       <!-- Eliminate compounds children from results -->
+       <str name="fq">-RELS_EXT_isPartOf_uri_ms:[* TO *]</str>
+     </lst>
   </requestHandler>
 
 
