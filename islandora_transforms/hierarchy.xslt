@@ -38,14 +38,13 @@
           FROM &lt;#ri&gt;
           WHERE {
             {
-              ?sub fre:isMemberOfCollection ?obj
+              &lt;%PID_URI%&gt; fre:isMemberOfCollection ?obj
             }
             UNION{
-              ?sub fre:isMemberOf ?obj
+              &lt;%PID_URI%&gt; fre:isMemberOf ?obj
             }
             ?obj fm:state fm:Active .
-            ?sub fm:state fm:Active
-            FILTER(sameTerm(?sub, &lt;%PID_URI%&gt;))
+            &lt;%PID_URI%&gt; fm:state fm:Active .
           }
         </xsl:with-param>
 
@@ -91,14 +90,13 @@
           FROM &lt;#ri&gt;
           WHERE {
             {
-              ?obj fre:isMemberOfCollection ?sub
+              ?obj fre:isMemberOfCollection &lt;%PID_URI%&gt;
             }
             UNION{
-              ?obj fre:isMemberOf ?sub
+              ?obj fre:isMemberOf &lt;%PID_URI%&gt;
             }
             ?obj fm:state fm:Active .
-            ?sub fm:state fm:Active
-            FILTER(sameTerm(?sub, &lt;%PID_URI%&gt;))
+            &lt;%PID_URI%&gt; fm:state fm:Active .
           }
         </xsl:with-param>
 
